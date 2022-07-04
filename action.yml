@@ -1,34 +1,31 @@
-name: "Composite Action Test"
-description: "Run multiple run steps"
+name: "Build and Push Image"
+description: "Build and Push Image"
 inputs:
-  your_name:
-    description: 'Your name'
-    default: 'Ethan'
-outputs:
-  random_number: 
-    description: "Random number"
-    value: ${{ steps.random_number_generator.outputs.random_id }}
-  food: 
-    description: "Food"
-    value: ${{ steps.food.outputs.test }}
+  image_name:
+    description: 'Image name'
+  dockerfile_dir:
+    description: 'DockerFile directory'
 runs:
     using: "composite"
     steps:
-      - run: echo Hi ${{ inputs.your_name }}
-        shell: bash
-      - run: echo os ${{runner.os}}
-        shell: bash
-      - run: echo action step env.foo ${{ env.foo }}
-        env: 
-          foo: this is foo 2
-        shell: bash
-      - run: echo "foo=this is foo 3" >> $GITHUB_ENV
-        shell: bash
-      - run: echo new env.foo for everything ${{ env.foo }}
-        shell: bash
-      - id: random_number_generator
-        run: echo "::set-output name=random_id::$(echo $RANDOM)"
-        shell: bash
-      - id: food
-        run: echo "::set-output name=test::strawberry"
-        shell: bash
+    - name: '登录到阿里云杭州容器镜像服务'
+      uses: docker/login-action@v1
+      with:
+        registry: registry.cn-hangzhou.aliyuncs.com
+        username: ${{ secrets.DOCKER_ALI_REGISTRY_USN }}
+        password: ${{ secrets.DOCKER_ALI_REGISTRY_PWD }}
+
+    - name: '登录到阿里云北京容器镜像服务'
+      uses: docker/login-action@v1
+      with:
+        registry: registry.cn-beijing.aliyuncs.com
+        username: ${{ secrets.DOCKER_ALI_REGISTRY_USN }}
+        password: ${{ secrets.DOCKER_ALI_REGISTRY_PWD }}
+
+    - name: '构建镜像并上传到 ghcr.io 容器镜像仓库'
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ${{ inputs.dockerfile_dir }}
+        push: true
+        tags: ${{ inputs.image_name }}
