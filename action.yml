@@ -22,7 +22,7 @@ runs:
         env: 
           foo: this is foo 2
         shell: bash
-      - run: echo '::set-env name=foo::this is foo 3'
+      - run: echo "foo=this is foo 3" >> $GITHUB_ENV
         shell: bash
       - run: echo new env.foo for everything ${{ env.foo }}
         shell: bash
